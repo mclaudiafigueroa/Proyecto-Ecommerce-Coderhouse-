@@ -39,9 +39,17 @@ CREATE TABLE pedido (
                       estado_pago VARCHAR(50) NULL,
                       importe DECIMAL NOT NULL,
                       fecha DATE DEFAULT 'PENDIENTE'
-                      );	
-ALTER TABLE pago MODIFY COLUMN fecha DATE DEFAULT 'PENDIENTE'; 
-ALTER TABLE pago MODIFY COLUMN fecha DATE DEFAULT NULL;
+                      );
+DROP TABLE IF EXISTS pago;
+ CREATE TABLE pago (
+                      id_pago INT AUTO_INCREMENT NOT NULL PRIMARY KEY,
+                      id_pedido INT NOT NULL,
+                      metodo_pago VARCHAR(50) NOT NULL,
+                      estado_pago VARCHAR(50) NULL,
+                      importe DECIMAL NOT NULL,
+                      fecha DATE DEFAULT NULL
+                      );
+                      
  CREATE TABLE producto (
                       id_producto INT AUTO_INCREMENT NOT NULL PRIMARY KEY,
                       id_categoria INT NOT NULL,
