@@ -1,3 +1,4 @@
+DROP DATABASE IF EXISTS ecommerce;
 CREATE DATABASE IF NOT EXISTS ecommerce;
 USE ecommerce;
 CREATE TABLE cliente (
@@ -32,15 +33,7 @@ CREATE TABLE pedido (
                       diseño VARCHAR(50) NOT NULL,
                       tipo_tecnica VARCHAR(50) NULL
                       );
- CREATE TABLE pago (
-                      id_pago INT AUTO_INCREMENT NOT NULL PRIMARY KEY,
-                      id_pedido INT NOT NULL,
-                      metodo_pago VARCHAR(50) NOT NULL,
-                      estado_pago VARCHAR(50) NULL,
-                      importe DECIMAL NOT NULL,
-                      fecha DATE DEFAULT 'PENDIENTE'
-                      );
-DROP TABLE IF EXISTS pago;
+
  CREATE TABLE pago (
                       id_pago INT AUTO_INCREMENT NOT NULL PRIMARY KEY,
                       id_pedido INT NOT NULL,
@@ -276,7 +269,6 @@ INSERT INTO variante (id_producto, id_color, nombre, precio)
 VALUES
 (14, 1, 'UNICO', 48000)
 ;
-SELECT*FROM PRODUCTO,variante;
 
 INSERT INTO pedido (id_cliente, id_canal_de_venta, tipo_entrega, estado, fecha) 
 VALUES
@@ -291,21 +283,51 @@ VALUES
 (9, 3, 'Envio', 'Pendiente', '2026-02-09'),
 (10, 1, 'Envio', 'Entregado', '2026-02-10')
 ;
+
+-- triggers
+
+DELIMITER //
+
+CREATE TRIGGER descontar_stock
+AFTER INSERT ON pedido_items
+FOR EACH ROW
+BEGIN
+    INSERT INTO inventario (id_variante, movimiento_stock, cantidad, fecha)
+    VALUES (NEW.id_variante, 'Salida', -NEW.cantidad, CURDATE());
+END //
+
+DELIMITER ;
+
+-- trigger 2
+
+DELIMITER //
+
+CREATE TRIGGER estado_pendiente
+BEFORE INSERT ON pedido
+FOR EACH ROW
+BEGIN
+    IF NEW.estado IS NULL THEN
+        SET NEW.estado = 'Pendiente';
+    END IF;
+END //
+
+DELIMITER ;
+
 INSERT INTO pedido_items (id_pedido, id_variante, detalle_productos, cantidad, precio) 
 VALUES
 (1, 1, 'Almohadon Tusor 40x40', 2, 20000),
-(1, 4, 'Almohadon Pelo 45x45', 1, 15000),
-(2, 7, 'Velas decorativas', 3, 10000),
-(3, 10, 'Cama gato simple', 1, 60000),
+(1, 12, 'Almohadon Pelo 45x45', 1, 15000),
+(2, 20, 'Velas decorativas', 3, 10000),
+(3, 23, 'Cama gato simple', 1, 60000),
 (4, 2, 'Almohadon Tusor 45x45', 1, 23000),
-(4, 13, 'Collar talle M', 1, 22000),
-(5, 5, 'Pie de cama', 1, 15000),
-(6, 6, 'Manta rustica', 1, 25000),
+(4, 25, 'Collar talle M', 1, 22000),
+(5, 15, 'Pie de cama', 1, 15000),
+(6, 18, 'Manta rustica', 1, 25000),
 (7, 3, 'Almohadon Tusor 50x50', 2, 26000),
-(8, 11, 'Cama gato doble', 1, 90000),
-(9, 8, 'Wax melts', 4, 10000),
-(10, 14, 'Pretal + correa', 1, 48000)
-;
+(8, 24, 'Cama gato doble', 1, 90000),
+(9, 21, 'Wax melts', 4, 10000),
+(10, 27, 'Pretal + correa', 1, 48000);
+
 SELECT id_variante, id_producto, nombre
 FROM variante;
 SELECT id_variante, nombre FROM variante;
@@ -351,13 +373,13 @@ VALUES
 ALTER TABLE personalizacion
 CHANGE diseño diseno VARCHAR(50)
 ;
-SELECT * FROM pedido_items;
+
 INSERT INTO personalizacion (id_item, diseno, tipo_tecnica) 
 VALUES
-(25, 'Nombre bordado', 'Bordado'),
-(26, 'Iniciales', 'DTF'),
-(29, 'Nombre + fecha', 'Bordado'),
-(33, 'Dibujo personalizado', 'DTF')
+(1, 'Nombre bordado', 'Bordado'),
+(2, 'Iniciales', 'DTF'),
+(3, 'Nombre + fecha', 'Bordado'),
+(4, 'Dibujo personalizado', 'DTF')
 ;
 INSERT INTO inventario (id_variante, movimiento_stock, cantidad, fecha) 
 VALUES
@@ -475,8 +497,6 @@ SELECT fn_cantidad_por_cliente(9);
 
 -- PROCEDIMIENTOS
 
-DROP PROCEDURE IF EXISTS crear_pedido;
-
 DELIMITER //
 
 CREATE PROCEDURE crear_pedido
@@ -509,34 +529,6 @@ END //
 
 DELIMITER ;
 
-CALL crear_pedido(1, 1, 'Envio', '2026-02-10');
 
--- triggers
 
-DELIMITER //
-
-CREATE TRIGGER descontar_stock
-AFTER INSERT ON pedido_items
-FOR EACH ROW
-BEGIN
-    INSERT INTO inventario (id_variante, movimiento_stock, cantidad, fecha)
-    VALUES (NEW.id_variante, 'Salida', -NEW.cantidad, CURDATE());
-END //
-
-DELIMITER ;
-
--- trigger 2
-
-DELIMITER //
-
-CREATE TRIGGER estado_pendiente
-BEFORE INSERT ON pedido
-FOR EACH ROW
-BEGIN
-    IF NEW.estado IS NULL THEN
-        SET NEW.estado = 'Pendiente';
-    END IF;
-END //
-
-DELIMITER ;
 
